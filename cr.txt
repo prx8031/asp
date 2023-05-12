@@ -1,0 +1,479 @@
+
+>>>>>>IEmployeeService.cs
+
+namespace EmployeeServices  
+{  
+    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IService1" in both code and config file together.  
+    [ServiceContract]  
+    public interface IEmployeeService   
+    {  
+  
+        [OperationContract]  
+        string GetData(int value);  
+  
+        [OperationContract]  
+        string AddEmployyeeRecord(Employee emp);  
+  
+        [OperationContract]  
+        DataSet GetEmployeeRecords();  
+  
+        [OperationContract]  
+        string DeleteRecords(Employee emp);  
+  
+        [OperationContract]  
+        DataSet SearchEmployeeRecord(Employee emp);  
+  
+        [OperationContract]  
+        string UpdateEmployeeContact(Employee emp);    
+  
+         
+    }  
+  
+  
+    // Use a data contract as illustrated in the sample below to add composite types to service operations.  
+    [DataContract]  
+    public class Employee  
+    {  
+          
+        string _empID = "";  
+        string _name = "";  
+        string _email = "";  
+        string _phone = "";  
+        string _gender = "";          
+          
+        [DataMember]  
+        public string EmpID  
+        {  
+            get { return _empID; }  
+            set { _empID = value; }  
+        }  
+  
+        [DataMember]  
+        public string Name  
+        {  
+            get { return _name; }  
+            set { _name = value; }  
+        }  
+  
+        [DataMember]  
+        public string Email  
+        {  
+            get { return _email; }  
+            set { _email = value; }  
+        }  
+  
+        [DataMember]  
+        public string Phone  
+        {  
+            get { return _phone; }  
+            set { _phone = value; }  
+        }  
+  
+        [DataMember]  
+        public string Gender  
+        {  
+            get { return _gender; }  
+            set { _gender = value; }  
+        }  
+    }  
+}  
+
+
+>>>>>>>EmployeeService.svc.cs
+
+
+namespace EmployeeServices  
+{  
+    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.  
+    public class EmpService : IEmployeeService   
+    {  
+  
+  
+        public string GetData(int value)  
+        {  
+            return string.Format("You entered: {0}", value);  
+        }  
+  
+        //C- Add Employee Record  
+        public string AddEmployyeeRecord(Employee emp)   
+        {  
+            string result = "";  
+            try  
+            {  
+  
+                SqlConnection con = new SqlConnection("Data Source=MCNDESKTOP35\\SQLEXPRESS;Initial Catalog=EmployeeDb;User ID=sa;Password=Password$2;");  
+                SqlCommand cmd = new SqlCommand();                  
+  
+                string Query = @"INSERT INTO tblEmployee (EmpID,Name,Email,Phone,Gender)  
+                                               Values(@EmpID,@Name,@Email,@Phone,@Gender)";  
+  
+                cmd = new SqlCommand(Query, con);  
+                cmd.Parameters.AddWithValue("@EmpID", emp.EmpID);  
+                cmd.Parameters.AddWithValue("@Name", emp.Name);  
+                cmd.Parameters.AddWithValue("@Email", emp.Email);  
+                cmd.Parameters.AddWithValue("@Phone", emp.Phone);  
+                cmd.Parameters.AddWithValue("@Gender", emp.Gender);  
+                con.Open();  
+                cmd.ExecuteNonQuery();  
+                con.Close();  
+                result = "Record Added Successfully !";  
+            }  
+            catch (FaultException fex)  
+            {  
+                result = "Error";  
+            }  
+  
+             return result;               
+        }  
+  
+        //Retrieve Data  
+        //Retrive Record  
+        public DataSet GetEmployeeRecords()  
+        {  
+            DataSet ds = new DataSet();  
+            try  
+            {  
+                SqlConnection con = new SqlConnection("Data Source=MCNDESKTOP35\\SQLEXPRESS;Initial Catalog=EmployeeDb;User ID=sa;Password=Password$2;");  
+                string Query = "SELECT * FROM tblEmployee";  
+  
+                SqlDataAdapter sda = new SqlDataAdapter(Query, con);  
+                sda.Fill(ds);  
+            }  
+            catch (FaultException fex)  
+            {  
+                throw new FaultException<string>("Error: "+fex);  
+            }  
+              
+            return ds;  
+        }  
+  
+        //Delete Record  
+        public string DeleteRecords(Employee emp)  
+        {  
+            string result = "";  
+            SqlConnection con = new SqlConnection("Data Source=MCNDESKTOP35\\SQLEXPRESS;Initial Catalog=EmployeeDb;User ID=sa;Password=Password$2;");  
+            SqlCommand cmd = new SqlCommand();  
+            string Query = "DELETE FROM tblEmployee Where EmpID=@EmpID";   
+            cmd = new SqlCommand(Query, con);  
+            cmd.Parameters.AddWithValue("@EmpID", emp.EmpID);  
+            con.Open();  
+            cmd.ExecuteNonQuery();  
+            con.Close();  
+            result = "Record Deleted Successfully!";  
+            return result;  
+        }  
+  
+        //Search Employee Record  
+        public DataSet SearchEmployeeRecord(Employee emp)  
+        {  
+            DataSet ds = new DataSet();  
+            try  
+            {  
+                SqlConnection con = new SqlConnection("Data Source=MCNDESKTOP35\\SQLEXPRESS;Initial Catalog=EmployeeDb;User ID=sa;Password=Password$2;");  
+                string Query = "SELECT * FROM tblEmployee WHERE EmpID=@EmpID";  
+  
+                SqlDataAdapter sda = new SqlDataAdapter(Query, con);  
+                sda.SelectCommand.Parameters.AddWithValue("@EmpID", emp.EmpID);  
+                sda.Fill(ds);  
+            }  
+            catch (FaultException fex)  
+            {  
+                throw new FaultException<string>("Error:  " + fex);  
+            }  
+            return ds;          
+        }  
+  
+        //UPDATE RECORDS  
+        //Update by Phone Roll   
+        public string UpdateEmployeeContact(Employee emp)   
+        {  
+            string result = "";  
+            SqlConnection con = new SqlConnection("Data Source=MCNDESKTOP35\\SQLEXPRESS;Initial Catalog=EmployeeDb;User ID=sa;Password=Password$2;");  
+            SqlCommand cmd = new SqlCommand();  
+  
+            string Query = "UPDATE tblEmployee SET Email=@Email,Phone=@Phone WHERE EmpID=@EmpID";  
+  
+            cmd = new SqlCommand(Query, con);  
+            cmd.Parameters.AddWithValue("@EmpID", emp.EmpID);  
+            cmd.Parameters.AddWithValue("@Email", emp.Email);  
+            cmd.Parameters.AddWithValue("@Phone", emp.Phone);  
+            con.Open();  
+            cmd.ExecuteNonQuery();  
+            result = "Record Updated Successfully !";  
+            con.Close();  
+  
+            return result;  
+        }  
+          
+          
+    }  
+}  
+
+
+>>>>>>Web.config 
+
+
+<?xml version="1.0"?>  
+<configuration>  
+  
+  <system.web>  
+    <compilation debug="true" targetFramework="4.0" />  
+  </system.web>  
+    
+  <system.serviceModel>  
+    <bindings>  
+      <wsHttpBinding>  
+        <binding name="wsHttpBinding_IService1" />  
+      </wsHttpBinding>  
+    </bindings>  
+    <client>  
+      <endpoint address=""  
+                binding="wsHttpBinding"  
+                contract="EmployeeServices.IEmployeeService"  
+                bindingConfiguration="wsHttpBinding_IEmployeeService" />  
+    </client>  
+      
+    <behaviors>  
+      <serviceBehaviors>  
+        <behavior>  
+          <serviceMetadata httpGetEnabled="true"/>  
+          <serviceDebug includeExceptionDetailInFaults="true"/>  
+        </behavior>  
+      </serviceBehaviors>  
+    </behaviors>      
+  
+    <serviceHostingEnvironment multipleSiteBindingsEnabled="true" />  
+  </system.serviceModel>  
+    
+ <system.webServer>  
+    <modules runAllManagedModulesForAllRequests="true"/>  
+  </system.webServer>  
+    
+</configuration>  
+
+
+
+
+<<<<<<<ASP.NET Web Application
+
+
+<<<<<Employee.Master 
+
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Employee.master.cs" Inherits="Application.Employee" %>  
+  
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">  
+  
+<html xmlns="http://www.w3.org/1999/xhtml">  
+<head runat="server">  
+    <title></title>  
+    <asp:ContentPlaceHolder ID="head" runat="server">  
+    </asp:ContentPlaceHolder>  
+    <style>  
+      body{width:100%; background-color:Silver;}  
+      .page-wrapper{width:700px; background-color:Orange; padding:0px; height:auto; overflow:hidden;}  
+      .header{height:50px; width:99%; padding:1%; background-color:Green; color:White; font-family:Segoe UI; font-size:30px;}  
+      .menu{height:30px; width:99%; padding:1%; background-color:White; color:White; font-family:Segoe UI; font-size:14px; clear:both; float:left; text-align:left;}  
+      .footer{height:30px; width:99%; padding:1%; background-color:Black; color:White; font-family:Segoe UI; font-size:12px; text-align:left; vertical-align:bottom; clear:both;}  
+      .button{width:110px; height:30px; border-style:none; background-color:Green; font-family:Verdana; font-size:15px; color:White;}  
+      .button:hover{background-color:Black;}  
+      .textBox{width:400px; background-color:White; border:1px Solid Navy; padding:5px; color:Black; font-family:Segoe UI; }  
+      .linkbutton{width:120px; padding:7px; background-color:Green;color:White; font-family:Verdana; font-size:16px; margin-right:1px; margin-top:2px; text-decoration:none;}  
+      .linkbutton:hover{background-color:Orange;}  
+    </style>  
+</head>  
+<body>  
+    <form id="form1" runat="server">  
+    <center>  
+    <div class="page-wrapper">  
+    <div class="header">  
+    CRUD Operation Using WCF Service  
+    </div>  
+    <div class="menu">  
+    <table style="float:left">  
+    <tr>  
+    <td><a href="AddNewEmployee.aspx" class="linkbutton" >Add New</a></td>  
+    <td><a href="UpdateEmployee.aspx" class="linkbutton" >Update</td>  
+    <td><a href="DeleteEmployee.aspx" class="linkbutton" >Delete</td>  
+    <td><a href="DissplayEmployeeRecord.aspx" class="linkbutton" >Display</td>  
+    </tr>  
+    </table>  
+    </div>  
+        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">  
+          
+        </asp:ContentPlaceHolder>  
+        <div class="footer">  
+        By C# Corner 2014  
+        </div>  
+    </div>  
+    </center>  
+    </form>  
+</body>  
+</html>  
+
+
+
+<<<<< Solution Explorer, right-click on the application name and move to "Add Service Reference...". 
+
+<<<<<EmployeeDb (Database) tblEmployee (table).
+
+
+Create database EmployeeDb;  
+  
+CREATE TABLE tblEmployee  
+(  
+  EmpId int NOT NULL PRIMARY KEY,  
+  Name nvarchar(50),  
+  Email nvarchar(50),  
+  Phone nvarchar(10),  
+  Gender char(10)  
+);  
+
+
+<<<<<<<AddNewEmployee.aspx
+
+
+<%@ Page Title="" Language="C#" MasterPageFile="~/Employee.Master" AutoEventWireup="true" CodeBehind="AddNewEmployee.aspx.cs" Inherits="Application.AddNewEmployee" %>  
+<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">  
+  
+</asp:Content>  
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">  
+    <table style="width:100%; color:Black; font-family:Segoe UI; font-size:14px; float:left; text-align:left;">  
+<tr>  
+<td colspan="2"><asp:Label ID="lblMsg" runat="server" Font-Size="Medium" ></asp:Label></td>  
+</tr>  
+<tr>  
+<td>Employee ID</td>  
+<td><asp:TextBox ID="txtEmpID" runat="server" CssClass="textBox" ></asp:TextBox></td>  
+</tr>  
+<tr>  
+<td>Name</td>  
+<td><asp:TextBox ID="txtName" runat="server" CssClass="textBox" ></asp:TextBox></td>  
+</tr>  
+<tr>  
+<td>Email</td>  
+<td><asp:TextBox ID="txtEmail" runat="server" CssClass="textBox" ></asp:TextBox></td>  
+</tr>  
+<tr>  
+<td>Phone</td>  
+<td><asp:TextBox ID="txtPhone" runat="server" CssClass="textBox" ></asp:TextBox></td>  
+</tr>  
+<tr>  
+<td>Gender</td>  
+<td>  
+<asp:RadioButtonList ID="rbtnGender" runat="server" RepeatColumns="2" CssClass="textBox" >  
+    <asp:ListItem Selected="True">Male</asp:ListItem>  
+    <asp:ListItem>Female</asp:ListItem>  
+</asp:RadioButtonList></td>  
+</tr>  
+<tr>  
+<td colspan="2">  
+<asp:Button ID="btnSave" runat="server" Text="Save" CssClass="button"   
+        onclick="btnSave_Click" />  
+<asp:Button ID="bntReset" runat="server" Text="Reset" CssClass="button"   
+        onclick="bntReset_Click" />  
+</td>  
+</tr>  
+</tr>  
+</table>  
+</asp:Content>
+
+
+
+<<<<<<<<<AddNewEmployee.aspx.cs 
+
+
+
+namespace Application  
+{  
+    public partial class AddNewEmployee : System.Web.UI.Page  
+    {  
+        protected void Page_Load(object sender, EventArgs e)  
+        {  
+            if (!Page.IsPostBack)  
+            {  
+                txtEmpID.Text = "";  
+                txtName.Text = "";  
+                txtEmail.Text = "";  
+                txtPhone.Text = "";  
+                lblMsg.Text = "";  
+                txtEmpID.Focus();  
+            }  
+              
+        }  
+  
+        protected void btnSave_Click(object sender, EventArgs e)  
+        {  
+            //Adding New Employee Records  
+              
+            if ((txtEmpID.Text != "") || (txtName.Text != "") || (txtEmail.Text != "") || (txtPhone.Text != ""))  
+            {  
+                try  
+                {  
+                    MyService.Employee employee = new MyService.Employee();  
+                    employee.EmpID = txtEmpID.Text;  
+                    employee.Name = txtName.Text;  
+                    employee.Email = txtEmail.Text;  
+                    employee.Phone = txtPhone.Text;  
+                    employee.Gender = rbtnGender.SelectedItem.Text;  
+  
+                    MyService.EmployeeServiceClient client = new MyService.EmployeeServiceClient();  
+                    lblMsg.Text = "Employee ID: " + employee.EmpID + ", " + client.AddEmployyeeRecord(employee);  
+                }  
+                catch (Exception ex)  
+                {  
+                    lblMsg.Text = "Employee ID must be unique! ";  
+                }  
+  
+  
+            }  
+            else  
+            {  
+  
+                lblMsg.Text = "All fields are mandatory! ";  
+                lblMsg.ForeColor = System.Drawing.Color.Red;  
+            }           
+  
+  
+        }  
+  
+        protected void bntReset_Click(object sender, EventArgs e)  
+        {  
+            ClearForm();  
+        }  
+  
+        private void ClearForm()  
+        {  
+           txtEmpID.Text = "";  
+            txtName.Text = "";  
+            txtEmail.Text = "";  
+            txtPhone.Text = "";  
+            lblMsg.Text = "";  
+            txtEmpID.Focus();  
+        }  
+    }  
+}  
+
+
+<<<<<<<< DisplayEmployeeRecord.aspx 
+
+
+<asp:GridView ID="grdEmployees" runat="server">  
+       <AlternatingRowStyle BackColor="White" />  
+       <HeaderStyle BackColor="#003300" Font-Bold="True" ForeColor="White" />  
+   </asp:GridView> 
+
+<<<<<<<< DisplayEmployeeRecord.aspx.cs
+
+
+protected void Page_Load(object sender, EventArgs e)  
+{  
+           if (!Page.IsPostBack)  
+           {  
+               DataSet ds = new DataSet();  
+               MyService.EmployeeServiceClient client = new MyService.EmployeeServiceClient();  
+               ds = client.GetEmployeeRecords();  
+               grdEmployees.DataSource = ds;  
+               grdEmployees.DataBind();  
+           }  
+ }  
+
