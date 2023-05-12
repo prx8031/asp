@@ -1,0 +1,244 @@
+>>>>>> Web.Config
+
+<connectionStrings>
+    <add name="datadb" connectionString="Data Source= PRATIKPARMAR; Integrated Security=true;Initial Catalog= datadb; uid=sa; Password=123; "
+      providerName="System.Data.SqlClient" />
+    <add name="datadbConnectionString" connectionString="Data Source=PRATIKPARMAR;Initial Catalog=datadb;User ID=sa;Password=123"
+      providerName="System.Data.SqlClient" />
+  </connectionStrings>
+
+-------------------------
+
+>>>>>>>>>index.aspx
+
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="index.aspx.cs" Inherits="index" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+    <style type="text/css">
+        .auto-style1 {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <table class="auto-style1">
+            <tr>
+                <td>name</td>
+                <td>
+                    <asp:TextBox ID="txtName" runat="server" OnTextChanged="TextBox1_TextChanged"></asp:TextBox>
+                </td>
+            </tr>
+            <tr>
+                <td>ph</td>
+                <td>
+                    <asp:TextBox ID="txtPh" runat="server"></asp:TextBox>
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td>
+                    <asp:Button ID="Button1" runat="server" OnClick="Button1_Click" Text="Insert" />
+                    <asp:Button ID="Button2" runat="server" OnClick="Button1_Click" Text="Update" />
+                    <asp:Button ID="Button3" runat="server" OnClick="Button1_Click" Text="Delete" />
+                </td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td>
+                    <asp:GridView ID="GridView1" runat="server" OnSelectedIndexChanged="GridView1_SelectedIndexChanged1" OnRowUpdating="onRowUpdation" AutoGenerateColumns="False" OnDataBound="OnRowDataBound" OnRowCancelingEdit="OnRowCancelingEdit" OnRowDeleting="GridView1_RowDeleting" OnRowEditing="RowEditing" DataKeyNames="uid">
+                           <Columns>
+                <%--<asp:TemplateField HeaderText="User ID" ItemStyle-Width="150">
+                    <ItemTemplate>
+                        <asp:Label ID="lblUid" runat="server" Text='<%# Eval("uid") %>'></asp:Label>
+                    </ItemTemplate>
+                    <EditItemTemplate>
+                        <asp:TextBox ID="txtUid" runat="server" Text='<%# Eval("uid") %>' Width="140"></asp:TextBox>
+                    </EditItemTemplate>
+                </asp:TemplateField>--%>
+                <asp:TemplateField HeaderText="Name" ItemStyle-Width="150">
+                    <ItemTemplate>
+                        <asp:Label ID="lblName" runat="server" Text='<%# Eval("uname") %>'></asp:Label>
+                    </ItemTemplate>
+                    <EditItemTemplate>
+                        <asp:TextBox ID="txtName" runat="server" Text='<%# Eval("uname") %>' Width="140"></asp:TextBox>
+                    </EditItemTemplate>
+                </asp:TemplateField>
+                <asp:TemplateField HeaderText="Phone" ItemStyle-Width="150">
+                    <ItemTemplate>
+                        <asp:Label ID="lblPhone" runat="server" Text='<%# Eval("uph") %>'></asp:Label>
+                    </ItemTemplate>
+                    <EditItemTemplate>
+                        <asp:TextBox ID="txtPh" runat="server" Text='<%# Eval("uph") %>' Width="140"></asp:TextBox>
+                    </EditItemTemplate>
+                </asp:TemplateField>
+                            
+                <asp:CommandField ButtonType="Link" HeaderText="Action" ShowEditButton="true" ShowDeleteButton="true"
+                    ItemStyle-Width="150" />
+
+
+            </Columns>
+
+                    </asp:GridView>
+                </td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+            </tr>
+            
+        </table>
+    <div>
+    
+    </div>
+    </form>
+</body>
+</html>
+
+
+>>>>>>>index.aspx.cs
+
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+
+public partial class index : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (!IsPostBack)
+        {
+            BindGridView();
+        }
+    }
+
+    protected void TextBox1_TextChanged(object sender, EventArgs e)
+    {
+
+    }
+
+    protected void Button1_Click(object sender, EventArgs e)
+    {
+        string name = txtName.Text;
+        string ph = txtPh.Text;
+        txtName.Text = "";
+        txtPh.Text = "";
+        string query = "INSERT INTO userstbl VALUES(@Name, @Ph)";
+        string constr = ConfigurationManager.ConnectionStrings["datadb"].ConnectionString;
+
+        using (SqlConnection con = new SqlConnection(constr))
+        {
+            using (SqlCommand cmd = new SqlCommand(query))
+            {
+                cmd.Parameters.AddWithValue("@Name", name);
+                cmd.Parameters.AddWithValue("@Ph", ph);
+                cmd.Connection = con;
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+                BindGridView();
+            }
+        }
+    }
+
+    protected void BindGridView()
+    {
+        string constr = ConfigurationManager.ConnectionStrings["datadb"].ConnectionString;
+        using (SqlConnection con = new SqlConnection(constr))
+        {
+            string query = "SELECT * FROM userstbl";
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                GridView1.DataSource = reader;
+                GridView1.DataBind();
+            }
+        }
+    }
+
+    protected void GridView1_SelectedIndexChanged(object sender, EventArgs e)
+    {
+
+    }
+
+    protected void GridView1_SelectedIndexChanged1(object sender, EventArgs e)
+    {
+
+    }
+
+    protected void onRowUpdation(object sender, GridViewUpdateEventArgs e)
+    {
+        GridViewRow row = GridView1.Rows[e.RowIndex];
+        int uid = Convert.ToInt32(GridView1.DataKeys[e.RowIndex].Values[0]);
+        string name = (row.FindControl("txtName") as TextBox).Text;
+        string phone = (row.FindControl("txtPh") as TextBox).Text;
+        string query = "UPDATE userstbl SET uname=@Name, uph=@Ph WHERE uid=@Uid";
+        string constr = ConfigurationManager.ConnectionStrings["datadb"].ConnectionString;
+
+        using (SqlConnection con = new SqlConnection(constr))
+        {
+            using (SqlCommand cmd = new SqlCommand(query))
+            {
+                cmd.Parameters.AddWithValue("@Uid", uid);
+                cmd.Parameters.AddWithValue("@Name", name);
+                cmd.Parameters.AddWithValue("@Ph", phone);
+                cmd.Connection = con;
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+        }
+        GridView1.EditIndex = -1;
+        BindGridView();
+    }
+
+    protected void OnRowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+    {
+        GridView1.EditIndex = -1;
+        BindGridView();
+    }
+
+    protected void GridView1_RowDeleting(object sender, GridViewDeleteEventArgs e)
+    {
+        int uid = Convert.ToInt32(GridView1.DataKeys[e.RowIndex].Values[0]);
+        string query = "DELETE FROM userstbl WHERE uid=@Uid";
+        string constr = ConfigurationManager.ConnectionStrings["datadb"].ConnectionString;
+        using (SqlConnection con = new SqlConnection(constr))
+        {
+            using (SqlCommand cmd = new SqlCommand(query))
+            {
+                cmd.Parameters.AddWithValue("@Uid", uid);
+                cmd.Connection = con;
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+        }
+
+        BindGridView();
+
+    }
+
+    protected void OnRowDataBound(object sender, EventArgs e)
+    {
+     
+    }
+
+    protected void RowEditing(object sender, GridViewEditEventArgs e)
+    {
+        GridView1.EditIndex = e.NewEditIndex;
+        BindGridView();
+    }
+}
